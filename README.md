@@ -5,15 +5,39 @@ An AWS lab I built to demonstrate private infrastructure, least-privilege access
 ## Architecture
 
 ```mermaid
-flowchart TD
-    TF["Terraform"] --> VPC["Private VPC, subnet and EC2"]
-    TF --> S3["Private, encrypted S3"]
-    TF --> IAM["Scoped IAM role"]
-    IAM --> TEST["Denied API test"]
-    TEST --> TRAIL["CloudTrail"]
-    TRAIL --> LOGS["CloudWatch Logs"]
-    LOGS --> ALARM["Metric filter and alarm"]
-    ALARM --> SNS["SNS email"]
+flowchart TB
+    TF["Terraform"]
+
+    subgraph FOUNDATION["Secure AWS foundation"]
+        direction LR
+        VPC["Private VPC + EC2"]
+        S3["Encrypted, private S3"]
+        IAM["Scoped IAM role"]
+    end
+
+    subgraph DETECTION["Detection and response"]
+        direction LR
+        TEST["Denied API event"] --> TRAIL["CloudTrail"]
+        TRAIL --> WATCH["CloudWatch alarm"]
+        WATCH --> SNS["SNS email alert"]
+    end
+
+    TF --> VPC
+    TF --> S3
+    TF --> IAM
+    IAM --> TEST
+    CHECK["Python validation: 7/7 passed"] -.-> VPC
+    CHECK -.-> S3
+    CHECK -.-> TRAIL
+
+    classDef source fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:2px
+    classDef secure fill:#e0f2fe,stroke:#0284c7,color:#082f49,stroke-width:2px
+    classDef monitor fill:#fef3c7,stroke:#d97706,color:#451a03,stroke-width:2px
+    classDef result fill:#dcfce7,stroke:#16a34a,color:#052e16,stroke-width:2px
+    class TF source
+    class VPC,S3,IAM secure
+    class TEST,TRAIL,WATCH monitor
+    class SNS,CHECK result
 ```
 
 Terraform defined the infrastructure and alert path. A Python script ran seven read-only checks against the deployed configuration.
