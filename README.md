@@ -1,34 +1,21 @@
 # Cloud Infrastructure & Security Monitoring
 
-An AWS lab I built to demonstrate private infrastructure, least-privilege access and a working security alert. The lab ran in `eu-west-2` on 29 September 2026 and was destroyed after validation.
+I built an AWS lab to test whether a denied API action would be recorded, detected and reported by email. It combined private infrastructure, scoped access, logging, automated checks and a controlled alert test. The lab ran in `eu-west-2` on 29 September 2026 and was destroyed after validation.
 
 ## Architecture
 
 ```mermaid
 flowchart TB
-    TF["Terraform"]
-
-    subgraph FOUNDATION["Secure AWS foundation"]
-        direction LR
-        VPC["Private VPC + EC2"]
-        S3["Encrypted, private S3"]
-        IAM["Scoped IAM role"]
-    end
-
-    subgraph DETECTION["Detection and response"]
-        direction LR
-        TEST["Denied API event"] --> TRAIL["CloudTrail"]
-        TRAIL --> WATCH["CloudWatch alarm"]
-        WATCH --> SNS["SNS email alert"]
-    end
-
+    TF["Terraform deployment"]
     TF --> VPC
     TF --> S3
     TF --> IAM
-    IAM --> TEST
-    CHECK["Python validation: 7/7 passed"] -.-> VPC
-    CHECK -.-> S3
-    CHECK -.-> TRAIL
+    VPC["Private VPC + EC2"]
+    S3["Encrypted, private S3"]
+    IAM["Scoped IAM role"] --> TEST["Denied API event"]
+    TEST --> TRAIL["CloudTrail"]
+    TRAIL --> WATCH["CloudWatch alarm"]
+    WATCH --> SNS["SNS email alert"]
 
     classDef source fill:#ede9fe,stroke:#7c3aed,color:#2e1065,stroke-width:2px
     classDef secure fill:#e0f2fe,stroke:#0284c7,color:#082f49,stroke-width:2px
@@ -37,10 +24,19 @@ flowchart TB
     class TF source
     class VPC,S3,IAM secure
     class TEST,TRAIL,WATCH monitor
-    class SNS,CHECK result
+    class SNS result
 ```
 
 Terraform defined the infrastructure and alert path. A Python script ran seven read-only checks against the deployed configuration.
+
+## Security design
+
+| Control | Design choice |
+| --- | --- |
+| Network | The EC2 instance ran in a private subnet with no public IPv4 address. Its security group had no inbound or outbound rules. |
+| Storage | The data bucket blocked public access and had default encryption and versioning enabled. |
+| Access | A reader role could list the lab bucket and read its objects, without broad S3 or EC2 permissions. |
+| Monitoring | CloudTrail sent management events to CloudWatch Logs. A metric filter and alarm watched for denied API activity and notified an SNS email subscription. |
 
 ## My approach
 
@@ -55,10 +51,11 @@ The first validation run exposed a credential-provider dependency issue. After r
 | Deployment | Terraform created 25 resources, including a private EC2 instance. |
 | Security settings | S3 public access was blocked, default encryption and versioning were enabled, and the instance security group had no inbound or outbound rules. |
 | Automated checks | All 7 Python checks passed. |
-| Detection | A restricted role's denied dry-run API request appeared in CloudTrail; CloudWatch entered ALARM and SNS delivered an [email notification](alert-email.png). |
+| Detection | A restricted role's denied dry-run `DeleteVpc` request appeared in CloudTrail. No VPC was deleted. |
+| Alert | CloudWatch entered ALARM about four minutes after the recorded denial, and SNS delivered an [email notification](alert-email.png). This timing is from one run, not a delivery guarantee. |
 | Cleanup | Terraform reported 25 resources destroyed. |
 
-The email screenshot has account information covered. I keep the Terraform and Python source, detailed run notes and full console evidence privately for interview discussion.
+The email screenshot has account information covered.
 
 This was a disposable test environment. The Python checks run on demand; they are not a continuous compliance service.
 
