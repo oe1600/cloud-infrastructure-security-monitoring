@@ -25,7 +25,7 @@ Terraform defined the infrastructure and alert path. A Python script ran seven r
 | Deployment | Terraform created 25 resources, including a private EC2 instance. |
 | Security settings | S3 public access was blocked, default encryption and versioning were enabled, and the instance security group had no inbound or outbound rules. |
 | Automated checks | All 7 Python checks passed. |
-| Detection | A restricted role's denied dry-run API request appeared in CloudTrail; CloudWatch entered ALARM and SNS delivered an [email notification](evidence/alert-email.png). |
+| Detection | A restricted role's denied dry-run API request appeared in CloudTrail; CloudWatch entered ALARM and SNS delivered an [email notification](alert-email.png). |
 | Cleanup | Terraform reported 25 resources destroyed. |
 
 The email screenshot has account information covered. I keep the Terraform and Python source, detailed run notes and full console evidence privately for interview discussion.
