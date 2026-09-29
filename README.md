@@ -55,7 +55,77 @@ The first validation run exposed a credential-provider dependency issue. After r
 | Alert | CloudWatch entered ALARM about four minutes after the recorded denial, and SNS delivered an [email notification](alert-email.png). This timing is from one run, not a delivery guarantee. |
 | Cleanup | Terraform reported 25 resources destroyed. |
 
-The email screenshot has account information covered.
+## Evidence from the lab
+
+The screenshots below show the deployed configuration and observed test results. Expand each section to view the evidence.
+
+<details open>
+<summary><strong>Private EC2 instance and VPC</strong></summary>
+
+The instance was running in the lab VPC and private subnet, with no public IPv4 address.
+
+![Private EC2 instance and VPC](02-vpc-ec2.png)
+
+</details>
+
+<details>
+<summary><strong>Security group: no inbound or outbound access</strong></summary>
+
+Both rule lists were empty, matching the isolated network design.
+
+![Security group inbound rules](03-security-group-inbound.png)
+![Security group outbound rules](03-security-group-outbound.png)
+
+</details>
+
+<details>
+<summary><strong>S3: public access blocked, encryption and versioning enabled</strong></summary>
+
+The data bucket had Block Public Access enabled, SSE-S3 default encryption and versioning.
+
+![S3 public access protection](04-s3-public-access.png)
+![S3 default encryption](04-s3-encryption.png)
+![S3 versioning](04-s3-versioning.png)
+
+</details>
+
+<details>
+<summary><strong>IAM: bucket-scoped read permissions</strong></summary>
+
+The policy limited list and object-read permissions to the lab data bucket.
+
+![Scoped IAM policy](05-iam-policy.png)
+
+</details>
+
+<details>
+<summary><strong>CloudTrail: active logging and CloudWatch integration</strong></summary>
+
+CloudTrail was logging, with log-file validation enabled and a CloudWatch Logs destination configured.
+
+![CloudTrail logging configuration](06-cloudtrail.png)
+
+</details>
+
+<details>
+<summary><strong>Detection: denied event, alarm transition and email</strong></summary>
+
+CloudTrail recorded the denied operation. CloudWatch history shows the transition to ALARM and successful execution of the SNS action, followed by a return to OK.
+
+![Denied API event in CloudTrail](08-cloudtrail-denied-event.png)
+![CloudWatch alarm history](07-alarm-history.png)
+![SNS alert email](alert-email.png)
+
+</details>
+
+<details>
+<summary><strong>Python validation: seven checks passed</strong></summary>
+
+The checks confirmed the S3 settings, empty security-group rules, active CloudTrail logging and CloudWatch Logs integration.
+
+![Seven passing security checks](10-validation.png)
+
+</details>
 
 This was a disposable test environment. The Python checks run on demand; they are not a continuous compliance service.
 
