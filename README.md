@@ -1,2 +1,33 @@
-# cloud-infrastructure-security-monitoring
-AWS security monitoring lab: architecture, validation results and alert evidence.
+# Cloud Infrastructure & Security Monitoring
+
+An AWS lab I built to demonstrate private infrastructure, least-privilege access and a working security alert. The lab ran in `eu-west-2` on 29 September 2026 and was destroyed after validation.
+
+## Architecture
+
+```mermaid
+flowchart TD
+    TF["Terraform"] --> VPC["Private VPC, subnet and EC2"]
+    TF --> S3["Private, encrypted S3"]
+    TF --> IAM["Scoped IAM role"]
+    IAM --> TEST["Denied API test"]
+    TEST --> TRAIL["CloudTrail"]
+    TRAIL --> LOGS["CloudWatch Logs"]
+    LOGS --> ALARM["Metric filter and alarm"]
+    ALARM --> SNS["SNS email"]
+```
+
+Terraform defined the infrastructure and alert path. A Python script ran seven read-only checks against the deployed configuration.
+
+## What I verified
+
+| Area | Observed result |
+| --- | --- |
+| Deployment | Terraform created 25 resources, including a private EC2 instance. |
+| Security settings | S3 public access was blocked, default encryption and versioning were enabled, and the instance security group had no inbound or outbound rules. |
+| Automated checks | All 7 Python checks passed. |
+| Detection | A restricted role's denied dry-run API request appeared in CloudTrail; CloudWatch entered ALARM and SNS delivered an [email notification](evidence/alert-email.png). |
+| Cleanup | Terraform reported 25 resources destroyed. |
+
+The email screenshot has account information covered. I keep the Terraform and Python source, detailed run notes and full console evidence privately for interview discussion.
+
+This was a disposable test environment. The Python checks run on demand; they are not a continuous compliance service.
