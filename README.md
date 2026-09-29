@@ -18,6 +18,12 @@ flowchart TD
 
 Terraform defined the infrastructure and alert path. A Python script ran seven read-only checks against the deployed configuration.
 
+## My approach
+
+I wanted to show that a security control could be tested end to end: a restricted identity makes an API request, AWS records the denial, and an alert reaches a person. I kept the EC2 instance private, limited the S3 reader role to one bucket, and used a dry-run request so the test could not delete the VPC.
+
+The first validation run stopped because the AWS login credential provider needed an additional dependency. I added `boto3[crt]` and reran the checks successfully. This was a useful reminder to test the validation tooling as carefully as the infrastructure.
+
 ## What I verified
 
 | Area | Observed result |
@@ -31,3 +37,5 @@ Terraform defined the infrastructure and alert path. A Python script ran seven r
 The email screenshot has account information covered. I keep the Terraform and Python source, detailed run notes and full console evidence privately for interview discussion.
 
 This was a disposable test environment. The Python checks run on demand; they are not a continuous compliance service.
+
+**Next iteration:** run the checks on a schedule and measure alert delivery across several tests, rather than relying on a single observed run.
