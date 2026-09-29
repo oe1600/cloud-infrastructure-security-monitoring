@@ -1,6 +1,8 @@
 # Cloud Infrastructure & Security Monitoring
 
-I built an AWS lab to test whether a denied API action would be recorded, detected and reported by email. It combined private infrastructure, scoped access, logging, automated checks and a controlled alert test. The lab ran in `eu-west-2` on 29 September 2026 and was destroyed after validation.
+A secure AWS environment built with EC2, S3 and VPC, using scoped IAM permissions, CloudWatch monitoring and email alerts. Terraform handled the infrastructure, and Python checks validated the network, storage and logging settings.
+
+Completed in `eu-west-2` on 29 September 2026. All resources were removed after testing.
 
 ## Architecture
 
@@ -52,7 +54,7 @@ The first validation run exposed a credential-provider dependency issue. After r
 | Security settings | S3 public access was blocked, default encryption and versioning were enabled, and the instance security group had no inbound or outbound rules. |
 | Automated checks | All 7 Python checks passed. |
 | Detection | A restricted role's denied dry-run `DeleteVpc` request appeared in CloudTrail. No VPC was deleted. |
-| Alert | CloudWatch entered ALARM about four minutes after the recorded denial, and SNS delivered an [email notification](alert-email.png). This timing is from one run, not a delivery guarantee. |
+| Alert | CloudWatch entered ALARM about four minutes after the recorded denial, and SNS delivered an [email notification](screenshots/alert-email.png). This timing is from one run, not a delivery guarantee. |
 | Cleanup | Terraform reported 25 resources destroyed. |
 
 ## Evidence from the lab
@@ -64,7 +66,7 @@ The screenshots below show the deployed configuration and observed test results.
 
 The instance was running in the lab VPC and private subnet, with no public IPv4 address.
 
-![Private EC2 instance and VPC](02-vpc-ec2.png)
+![Private EC2 instance and VPC](screenshots/02-vpc-ec2.png)
 
 </details>
 
@@ -73,8 +75,8 @@ The instance was running in the lab VPC and private subnet, with no public IPv4 
 
 Both rule lists were empty, matching the isolated network design.
 
-![Security group inbound rules](03-security-group-inbound.png)
-![Security group outbound rules](03-security-group-outbound.png)
+![Security group inbound rules](screenshots/03-security-group-inbound.png)
+![Security group outbound rules](screenshots/03-security-group-outbound.png)
 
 </details>
 
@@ -83,9 +85,9 @@ Both rule lists were empty, matching the isolated network design.
 
 The data bucket had Block Public Access enabled, SSE-S3 default encryption and versioning.
 
-![S3 public access protection](04-s3-public-access.png)
-![S3 default encryption](04-s3-encryption.png)
-![S3 versioning](04-s3-versioning.png)
+![S3 public access protection](screenshots/04-s3-public-access.png)
+![S3 default encryption](screenshots/04-s3-encryption.png)
+![S3 versioning](screenshots/04-s3-versioning.png)
 
 </details>
 
@@ -94,7 +96,7 @@ The data bucket had Block Public Access enabled, SSE-S3 default encryption and v
 
 The policy limited list and object-read permissions to the lab data bucket.
 
-![Scoped IAM policy](05-iam-policy.png)
+![Scoped IAM policy](screenshots/05-iam-policy.png)
 
 </details>
 
@@ -103,7 +105,7 @@ The policy limited list and object-read permissions to the lab data bucket.
 
 CloudTrail was logging, with log-file validation enabled and a CloudWatch Logs destination configured.
 
-![CloudTrail logging configuration](06-cloudtrail.png)
+![CloudTrail logging configuration](screenshots/06-cloudtrail.png)
 
 </details>
 
@@ -112,9 +114,9 @@ CloudTrail was logging, with log-file validation enabled and a CloudWatch Logs d
 
 CloudTrail recorded the denied operation. CloudWatch history shows the transition to ALARM and successful execution of the SNS action, followed by a return to OK.
 
-![Denied API event in CloudTrail](08-cloudtrail-denied-event.png)
-![CloudWatch alarm history](07-alarm-history.png)
-![SNS alert email](alert-email.png)
+![Denied API event in CloudTrail](screenshots/08-cloudtrail-denied-event.png)
+![CloudWatch alarm history](screenshots/07-alarm-history.png)
+![SNS alert email](screenshots/alert-email.png)
 
 </details>
 
@@ -123,7 +125,7 @@ CloudTrail recorded the denied operation. CloudWatch history shows the transitio
 
 The checks confirmed the S3 settings, empty security-group rules, active CloudTrail logging and CloudWatch Logs integration.
 
-![Seven passing security checks](10-validation.png)
+![Seven passing security checks](screenshots/10-validation.png)
 
 </details>
 
